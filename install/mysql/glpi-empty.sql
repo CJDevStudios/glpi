@@ -9352,6 +9352,90 @@ CREATE TABLE `glpi_searches_criteriafilters` (
    KEY `search_itemtype` (`search_itemtype`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
+DROP TABLE IF EXISTS `glpi_problems_problems`;
+CREATE TABLE `glpi_problems_problems` (
+   `id` int unsigned NOT NULL AUTO_INCREMENT,
+   `problems_id_1` int unsigned NOT NULL DEFAULT '0',
+   `problems_id_2` int unsigned NOT NULL DEFAULT '0',
+   `link` int NOT NULL DEFAULT '1',
+   PRIMARY KEY (`id`),
+   UNIQUE KEY `unicity` (`problems_id_1`,`problems_id_2`),
+   KEY `problems_id_2` (`problems_id_2`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+
+DROP TABLE IF EXISTS `glpi_changesatisfactions`;
+CREATE TABLE `glpi_changesatisfactions` (
+   `id` int unsigned NOT NULL AUTO_INCREMENT,
+   `changes_id` int unsigned NOT NULL DEFAULT '0',
+   `type` int NOT NULL DEFAULT '1',
+   `date_begin` timestamp NULL DEFAULT NULL,
+   `date_answered` timestamp NULL DEFAULT NULL,
+   `satisfaction` int DEFAULT NULL,
+   `satisfaction_scaled_to_5` float DEFAULT NULL,
+   `comment` text,
+   PRIMARY KEY (`id`),
+   UNIQUE KEY `changes_id` (`changes_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+
+DROP TABLE IF EXISTS `glpi_oauth_access_tokens`;
+CREATE TABLE `glpi_oauth_access_tokens` (
+   `identifier` varchar(255) NOT NULL,
+   `client` varchar(255) NOT NULL,
+   `date_expiration` timestamp NOT NULL,
+   `user_identifier` varchar(255) DEFAULT NULL,
+   `scopes` text DEFAULT NULL,
+   PRIMARY KEY (`identifier`),
+   KEY `client` (`client`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+
+DROP TABLE IF EXISTS `glpi_oauth_refresh_tokens`;
+CREATE TABLE `glpi_oauth_refresh_tokens` (
+   `identifier` varchar(255) NOT NULL,
+   `access_token` varchar(255) NOT NULL,
+   `date_expiration` timestamp NOT NULL,
+   PRIMARY KEY (`identifier`),
+   KEY `access_token` (`access_token`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+
+DROP TABLE IF EXISTS `glpi_oauth_auth_codes`;
+CREATE TABLE `glpi_oauth_auth_codes` (
+   `identifier` varchar(255) NOT NULL,
+   `client` varchar(255) NOT NULL,
+   `date_expiration` timestamp NOT NULL,
+   `user_identifier` varchar(255) DEFAULT NULL,
+   `scopes` text DEFAULT NULL,
+   PRIMARY KEY (`identifier`),
+   KEY `client` (`client`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+
+DROP TABLE IF EXISTS `glpi_oauthclients`;
+CREATE TABLE `glpi_oauthclients` (
+   `identifier` varchar(255) NOT NULL,
+   `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Internal GLPI ID',
+   `name` varchar(255) NOT NULL DEFAULT '',
+   `comment` text DEFAULT NULL,
+   `secret` varchar(255) NOT NULL,
+   `redirect_uri` TEXT NOT NULL,
+   `grants` text NOT NULL,
+   `scopes` text NOT NULL,
+   `is_active` tinyint NOT NULL DEFAULT '1',
+   `is_confidential` tinyint NOT NULL DEFAULT '1',
+   PRIMARY KEY (`identifier`),
+   KEY `id` (`id`),
+   KEY `name` (`name`),
+   KEY `is_active` (`is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+
+DROP TABLE IF EXISTS `glpi_validatorsubstitutes`;
+CREATE TABLE `glpi_validatorsubstitutes` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `users_id` int unsigned  NOT NULL DEFAULT '0' COMMENT 'Delegator user',
+  `users_id_substitute` int unsigned  NOT NULL DEFAULT '0' COMMENT 'Substitute user',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `users_id_users_id_substitute` (`users_id`, `users_id_substitute`),
+  KEY `users_id_substitute` (`users_id_substitute`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+
 DROP TABLE IF EXISTS `glpi_searches_criteriafilters`;
 CREATE TABLE `glpi_searches_criteriafilters` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,

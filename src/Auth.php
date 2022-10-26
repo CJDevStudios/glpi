@@ -766,13 +766,17 @@ class Auth extends CommonGLPI
     /**
      * Manage use authentication and initialize the session
      *
-     * @param string  $login_name      Login
-     * @param string  $login_password  Password
-     * @param boolean $noauto          (false by default)
-     * @param bool    $remember_me
-     * @param string  $login_auth      Type of auth - id of the auth
-     *
-     * @return boolean (success)
+     * This process will create the user in GLPI if they are provided by an external source, and runs the LDAP deleted user workflow if needed.
+     * This method modifies the Auth object's properties.
+     * More information about the login validation can be retreived from those properties.
+     * If testing more than one set of credentials, it is best to use a new Auth object for each set of credentials.
+     * The {@link user} property may have some updated fields set here, but they will not be saved to the database
+     * (unless this function was called by {@link login()} in which case the login function will trigger the update).
+     * @param string $login_name     Login
+     * @param string $login_password Password
+     * @param bool $noauto           (false by default)
+     * @param string $login_auth     Type of auth
+     * @return bool True if the user could log in, false otherwise
      */
     public function login($login_name, $login_password, $noauto = false, $remember_me = false, $login_auth = '')
     {

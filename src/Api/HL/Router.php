@@ -60,7 +60,9 @@ use Glpi\Http\JSONResponse;
 use Glpi\Http\Request;
 use Glpi\Http\Response;
 use Glpi\Plugin\Hooks;
+use Glpi\OAuth\Server;
 use GuzzleHttp\Psr7\Utils;
+use League\OAuth2\Server\Exception\OAuthServerException;
 use Session;
 
 class Router
@@ -527,6 +529,8 @@ EOT;
             $request->setParameter($key, $value);
         }
 
+        $request = $request->withQueryParams(array_merge($request->getQueryParams(), $_GET));
+
         // Handle potential JSON request body
         $content_types = $request->getHeader('Content-Type');
         if (in_array('application/json', $content_types, true)) {
@@ -548,7 +552,18 @@ EOT;
             }
         }
 
-        $this->resumeSession($request);
+        try {
+            $this->handleAuth($request);
+        } catch (OAuthServerException $e) {
+            return new JSONResponse(
+                content: AbstractController::getErrorResponseBody(
+                    status: AbstractController::ERROR_INVALID_PARAMETER,
+                    title: 'Invalid OAuth token',
+                    detail: $e->getHint()
+                ),
+                status: 400
+            );
+        }
 
         $this->original_request = clone $request;
         $matched_route = $this->match($request);
@@ -569,7 +584,9 @@ EOT;
 
             if ($requires_auth && !$auth_from_middleware) {
                 if (!$request->hasHeader('Glpi-Session-Token')) {
-                    $response = $unauthenticated_response;
+                    if (!($request->hasHeader('Authorization') && Session::getLoginUserID() !== false)) {
+                        $response = $unauthenticated_response;
+                    }
                 } else {
                     $current_session_id = session_id();
                     $session_token = $request->getHeaderLine('Glpi-Session-Token');
@@ -611,31 +628,82 @@ EOT;
     }
 
     /**
-     * Try resuming the session from the Glpi-Session-Token header
+     * Try resuming the session from the Glpi-Session-Token header or start a temporary session if an OAuth token is provided.
      * @param Request $request
      * @return void
+     * @throws OAuthServerException
      */
-    private function resumeSession(Request $request): void
+    private function handleAuth(Request $request): void
     {
+        if ($request->hasHeader('Authorization')) {
+            $auth_header = $request->getHeaderLine('Authorization');
+            // if basic auth
+            if (preg_match('/^Basic\s+(.*)$/i', $auth_header, $matches)) {
+                $this->resumeSession('');
+            } else {
+                $this->startTemporarySession($request);
+                if ($request->hasHeader('GLPI-Profile')) {
+                    $requested_profile = $request->getHeaderLine('GLPI-Profile');
+                    if (is_numeric($requested_profile)) {
+                        Session::changeProfile((int) $requested_profile);
+                    }
+                }
+                if ($request->hasHeader('GLPI-Entity')) {
+                    $requested_entity = $request->getHeaderLine('GLPI-Entity');
+                    if (is_numeric($requested_entity)) {
+                        $is_recursive = $request->hasHeader('GLPI-Entity-Recursive') && strtolower($request->getHeaderLine('GLPI-Entity-Recursive')) === 'true';
+                        Session::changeActiveEntities((int) $requested_entity, $is_recursive);
+                    }
+                }
+            }
+            return;
+        }
         if (
             $request->hasHeader('Glpi-Session-Token')
             && !empty($request->getHeaderLine('Glpi-Session-Token'))
         ) {
-            $current = session_id();
-            $session = trim($request->getHeaderLine('Glpi-Session-Token'));
-
-            if ($session != $current && !empty($current)) {
-                session_destroy();
-            }
-            if ($session != $current && !empty($session)) {
-                session_id($session);
-            }
+            $this->resumeSession($request->getHeaderLine('Glpi-Session-Token'));
         }
         Session::setPath();
         Session::start();
 
         // Clear all messages in the session to avoid unhandled messages being displayed in the errors of unrelated API requests
         $_SESSION['MESSAGE_AFTER_REDIRECT'] = [];
+    }
+
+    /**
+     * @throws OAuthServerException
+     */
+    public function startTemporarySession(Request $request): void
+    {
+        $data = Server::validateAccessToken($request);
+        $auth = new \Auth();
+        $auth->auth_succeded = true;
+        $auth->user = new \User();
+        $auth->user->getFromDB($data['user_id']);
+        Session::init($auth);
+    }
+
+    /**
+     * Resume a session from a session token.
+     * @param string $session_token
+     * @return void
+     */
+    private function resumeSession(string $session_token): void
+    {
+        $current = session_id();
+        $session = trim($session_token);
+
+        if (file_exists(GLPI_ROOT . '/inc/downstream.php')) {
+            include_once(GLPI_ROOT . '/inc/downstream.php');
+        }
+
+        if ($session != $current && !empty($current)) {
+            session_destroy();
+        }
+        if ($session != $current && !empty($session)) {
+            session_id($session);
+        }
     }
 
     /**

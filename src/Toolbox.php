@@ -2437,6 +2437,9 @@ class Toolbox
             // Initalize rules
             RulesManager::initializeRules();
 
+            // Make sure keys are generated automatically so OAuth will work when/if they choose to use it
+            \Glpi\OAuth\Server::generateKeys();
+
            // update default language
             Config::setConfigurationValues(
                 'core',

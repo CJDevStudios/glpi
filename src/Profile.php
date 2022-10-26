@@ -1109,6 +1109,7 @@ class Profile extends CommonDBTM
                             $fn_get_rights(Notification::class, 'central'),
                             $fn_get_rights(SLM::class, 'central', ['label' => __('SLM')]),
                             $fn_get_rights(LineOperator::class, 'central'),
+                            $fn_get_rights(OAuthClient::class, 'central'),
                         ],
                     ]
                 ],

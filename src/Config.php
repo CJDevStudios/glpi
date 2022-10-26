@@ -2380,6 +2380,14 @@ HTML;
                 'name'  => 'ralouphie/getallheaders',
                 'check' => 'getallheaders'
             ],
+            [
+                'name'    => 'symfony/html-sanitizer',
+                'check'   => 'Symfony\\Component\\HtmlSanitizer\\HtmlSanitizer'
+            ],
+            [
+                'name' => 'league/oauth2-server',
+                'check' => 'League\\OAuth2\\Server\\AuthorizationServer'
+            ],
         ];
         if (Toolbox::canUseCAS()) {
             $deps[] = [
