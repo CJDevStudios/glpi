@@ -539,6 +539,8 @@ $CFG_GLPI['databaseinstance_types'] = ['Computer'];
 
 $CFG_GLPI['agent_types'] = ['Computer', 'Phone'];
 
+$CFG_GLPI['itil_types'] = ['Ticket', 'Change', 'Problem'];
+
 $reservations_libs = ['fullcalendar', 'reservations'];
 
 $CFG_GLPI['javascript'] = [
@@ -593,7 +595,8 @@ $CFG_GLPI['javascript'] = [
         'plugin' => [
             'marketplace' => ['marketplace']
         ],
-        'config' => ['clipboard', 'tinymce']
+        'config' => ['clipboard', 'tinymce'],
+        'webhook' => ['monaco', 'autocomplete']
     ],
     'admin'        => ['clipboard', 'sortable'],
     'preference'   => ['clipboard'],

@@ -39,6 +39,7 @@ use Glpi\Features\CacheableListInterface;
 use Glpi\Plugin\Hooks;
 use Glpi\RichText\RichText;
 use Glpi\RichText\UserMention;
+use Glpi\Search\FilterableInterface;
 use Glpi\Socket;
 use Glpi\Toolbox\Sanitizer;
 
@@ -1340,6 +1341,7 @@ class CommonDBTM extends CommonGLPI
 
             if ($this->checkUnicity(true, $options)) {
                 if ($this->addToDB() !== false) {
+                    Webhook::raise('new', $this);
                     $this->post_addItem();
                     if ($this instanceof CacheableListInterface) {
                         $this->invalidateListCache();
@@ -1744,6 +1746,7 @@ class CommonDBTM extends CommonGLPI
                     $this->clearSavedInput();
                 }
 
+                Webhook::raise('update', $this);
                 $this->post_updateItem($history);
                 if ($this instanceof CacheableListInterface) {
                     $this->invalidateListCache();
@@ -1999,6 +2002,15 @@ class CommonDBTM extends CommonGLPI
         if (count($this->updates) > 0) {
             UserMention::handleUserMentions($this);
         }
+
+        // Clear filter on itemtype change
+        if (
+            $this instanceof FilterableInterface
+            && $this->getItemtypeField() !== null
+            && in_array($this->getItemtypeField(), $this->updates)
+        ) {
+            $this->deleteFilter();
+        }
     }
 
 
@@ -2098,6 +2110,7 @@ class CommonDBTM extends CommonGLPI
 
         if ($this->pre_deleteItem()) {
             if ($this->deleteFromDB($force)) {
+                Webhook::raise('delete', $this);
                 if ($force) {
                     $this->addMessageOnPurgeAction();
                     $this->post_purgeItem();
